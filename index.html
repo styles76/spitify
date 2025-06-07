@@ -14,6 +14,7 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
+      flex-direction: column;
     }
 
     .outerfy {
@@ -23,9 +24,6 @@
       box-shadow: 0 0 10px #0ef;
       width: 90%;
       max-width: 500px;
-    }
-
-    .fy {
       text-align: center;
     }
 
@@ -47,17 +45,22 @@
     button:hover {
       background-color: #00c1ff;
     }
+
+    #player-container {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div class="outerfy">
-    <div class="fy">
-      <div id="player"></div>
-      <div class="controls">
-        <button class="back">Back</button>
-        <button class="Play">Play</button>
-        <button class="fwd">Fwd</button>
-      </div>
+
+  <button id="startBtn">Start Player</button>
+
+  <div id="player-container" class="outerfy">
+    <div id="player"></div>
+    <div class="controls">
+      <button id="back">Back</button>
+      <button id="playPause">Pause</button>
+      <button id="fwd">Fwd</button>
     </div>
   </div>
 
@@ -67,7 +70,14 @@
     const videoList = ['kYpAlkHI7iM','984DiTFjWgE','EpZ5_cUMW-A','DlLZloTNLB8'];
     let currentIndex = 0;
 
-    function onYouTubeIframeAPIReady() {
+    // Load player only after user taps "Start Player"
+    document.getElementById('startBtn').addEventListener('click', () => {
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('player-container').style.display = 'block';
+      createPlayer();
+    });
+
+    function createPlayer() {
       player = new YT.Player('player', {
         height: '200',
         width: '100%',
@@ -86,27 +96,22 @@
     }
 
     function onPlayerReady(event) {
-      player.mute(); // ✅ Allows autoplay to work on mobile
-      event.target.playVideo();
-
-      document.querySelector('.Play').addEventListener('click', togglePlayPause);
-      document.querySelector('.back').addEventListener('click', playPrevious);
-      document.querySelector('.fwd').addEventListener('click', playNext);
+      event.target.playVideo(); // Starts the first video
+      // Event listeners for control buttons
+      document.getElementById('playPause').addEventListener('click', togglePlayPause);
+      document.getElementById('back').addEventListener('click', playPrevious);
+      document.getElementById('fwd').addEventListener('click', playNext);
     }
 
     function onPlayerStateChange(event) {
       if (event.data === YT.PlayerState.ENDED) {
-        playNext(); // Auto play next video
+        playNext();
       }
     }
 
     function togglePlayPause() {
-      if (!player || typeof player.getPlayerState !== 'function') return;
-
-      const state = player.getPlayerState();
-      const playBtn = document.querySelector('.Play');
-
-      if (state === YT.PlayerState.PLAYING) {
+      const playBtn = document.getElementById('playPause');
+      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
         player.pauseVideo();
         playBtn.textContent = 'Play';
       } else {
@@ -118,13 +123,13 @@
     function playNext() {
       currentIndex = (currentIndex + 1) % videoList.length;
       player.loadVideoById(videoList[currentIndex]);
-      document.querySelector('.Play').textContent = 'Pause';
+      document.getElementById('playPause').textContent = 'Pause';
     }
 
     function playPrevious() {
       currentIndex = (currentIndex - 1 + videoList.length) % videoList.length;
       player.loadVideoById(videoList[currentIndex]);
-      document.querySelector('.Play').textContent = 'Pause';
+      document.getElementById('playPause').textContent = 'Pause';
     }
   </script>
 </body>
