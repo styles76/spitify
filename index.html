@@ -25,6 +25,7 @@
       width: 90%;
       max-width: 500px;
       text-align: center;
+      display: none;
     }
 
     .controls {
@@ -45,17 +46,13 @@
     button:hover {
       background-color: #00c1ff;
     }
-
-    #player-container {
-      display: none;
-    }
   </style>
 </head>
 <body>
 
   <button id="startBtn">Start Player</button>
 
-  <div id="player-container" class="outerfy">
+  <div class="outerfy" id="playerContainer">
     <div id="player"></div>
     <div class="controls">
       <button id="back">Back</button>
@@ -67,13 +64,13 @@
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
     let player;
-    const videoList = ['kYpAlkHI7iM','984DiTFjWgE','EpZ5_cUMW-A','DlLZloTNLB8'];
+    const videoList = ['kYpAlkHI7iM', '984DiTFjWgE', 'EpZ5_cUMW-A', 'DlLZloTNLB8'];
     let currentIndex = 0;
 
-    // Load player only after user taps "Start Player"
+    // Create player after user interaction
     document.getElementById('startBtn').addEventListener('click', () => {
       document.getElementById('startBtn').style.display = 'none';
-      document.getElementById('player-container').style.display = 'block';
+      document.getElementById('playerContainer').style.display = 'block';
       createPlayer();
     });
 
@@ -84,6 +81,7 @@
         videoId: videoList[currentIndex],
         playerVars: {
           autoplay: 1,
+          mute: 0, // Set to 1 if you want autoplay without sound (mobile safe)
           controls: 1,
           rel: 0,
           modestbranding: 1
@@ -96,8 +94,8 @@
     }
 
     function onPlayerReady(event) {
-      event.target.playVideo(); // Starts the first video
-      // Event listeners for control buttons
+      event.target.playVideo();
+
       document.getElementById('playPause').addEventListener('click', togglePlayPause);
       document.getElementById('back').addEventListener('click', playPrevious);
       document.getElementById('fwd').addEventListener('click', playNext);
@@ -110,13 +108,15 @@
     }
 
     function togglePlayPause() {
-      const playBtn = document.getElementById('playPause');
-      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+      const btn = document.getElementById('playPause');
+      const state = player.getPlayerState();
+
+      if (state === YT.PlayerState.PLAYING) {
         player.pauseVideo();
-        playBtn.textContent = 'Play';
+        btn.textContent = 'Play';
       } else {
         player.playVideo();
-        playBtn.textContent = 'Pause';
+        btn.textContent = 'Pause';
       }
     }
 
