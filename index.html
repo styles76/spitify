@@ -85,7 +85,10 @@
       });
     }
 
-    function onPlayerReady() {
+    function onPlayerReady(event) {
+      player.mute(); // ✅ Allows autoplay to work on mobile
+      event.target.playVideo();
+
       document.querySelector('.Play').addEventListener('click', togglePlayPause);
       document.querySelector('.back').addEventListener('click', playPrevious);
       document.querySelector('.fwd').addEventListener('click', playNext);
