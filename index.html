@@ -30,10 +30,13 @@
 
     .controls {
       margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     button {
-      margin: 0 5px;
       padding: 10px 20px;
       font-size: 16px;
       border: none;
@@ -45,6 +48,26 @@
 
     button:hover {
       background-color: #00c1ff;
+    }
+
+    #playlist {
+      margin-top: 15px;
+      text-align: left;
+    }
+
+    #playlist li {
+      cursor: pointer;
+      padding: 5px;
+      border-bottom: 1px solid #444;
+    }
+
+    #playlist li:hover {
+      background-color: #333;
+    }
+
+    #playlist .active {
+      background-color: #0ef;
+      color: black;
     }
   </style>
 </head>
@@ -58,47 +81,50 @@
       <button id="back">Back</button>
       <button id="playPause">Pause</button>
       <button id="fwd">Fwd</button>
+      <button id="random">Random</button>
+      <button id="shuffle">Shuffle: Off</button>
     </div>
+    <ul id="playlist"></ul>
   </div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
     let player;
-    const videoList = ['kYpAlkHI7iM', '984DiTFjWgE', 'EpZ5_cUMW-A', 'DlLZloTNLB8'];
+    const videoList = [
+      { id: 'kYpAlkHI7iM', title: 'Video 1' },
+      { id: '984DiTFjWgE', title: 'Video 2' },
+      { id: 'EpZ5_cUMW-A', title: 'Video 3' },
+      { id: 'DlLZloTNLB8', title: 'Video 4' }
+    ];
     let currentIndex = 0;
+    let shuffleMode = false;
 
-    // Create player after user interaction
     document.getElementById('startBtn').addEventListener('click', () => {
       document.getElementById('startBtn').style.display = 'none';
       document.getElementById('playerContainer').style.display = 'block';
+      const savedIndex = localStorage.getItem('lastIndex');
+      if (savedIndex !== null) currentIndex = parseInt(savedIndex);
       createPlayer();
+      renderPlaylist();
     });
 
     function createPlayer() {
       player = new YT.Player('player', {
         height: '200',
         width: '100%',
-        videoId: videoList[currentIndex],
-        playerVars: {
-          autoplay: 1,
-          mute: 0, // Set to 1 if you want autoplay without sound (mobile safe)
-          controls: 1,
-          rel: 0,
-          modestbranding: 1
-        },
-        events: {
-          'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
-        }
+        videoId: videoList[currentIndex].id,
+        playerVars: { autoplay: 1, mute: 0, controls: 1, rel: 0, modestbranding: 1 },
+        events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange }
       });
     }
 
     function onPlayerReady(event) {
       event.target.playVideo();
-
       document.getElementById('playPause').addEventListener('click', togglePlayPause);
       document.getElementById('back').addEventListener('click', playPrevious);
       document.getElementById('fwd').addEventListener('click', playNext);
+      document.getElementById('random').addEventListener('click', playRandom);
+      document.getElementById('shuffle').addEventListener('click', toggleShuffle);
     }
 
     function onPlayerStateChange(event) {
@@ -110,7 +136,6 @@
     function togglePlayPause() {
       const btn = document.getElementById('playPause');
       const state = player.getPlayerState();
-
       if (state === YT.PlayerState.PLAYING) {
         player.pauseVideo();
         btn.textContent = 'Play';
@@ -121,15 +146,57 @@
     }
 
     function playNext() {
+      if (shuffleMode) return playRandom();
       currentIndex = (currentIndex + 1) % videoList.length;
-      player.loadVideoById(videoList[currentIndex]);
-      document.getElementById('playPause').textContent = 'Pause';
+      loadVideo();
     }
 
     function playPrevious() {
       currentIndex = (currentIndex - 1 + videoList.length) % videoList.length;
-      player.loadVideoById(videoList[currentIndex]);
+      loadVideo();
+    }
+
+    function playRandom() {
+      let randomIndex;
+      do {
+        randomIndex = Math.floor(Math.random() * videoList.length);
+      } while (randomIndex === currentIndex);
+      currentIndex = randomIndex;
+      loadVideo();
+    }
+
+    function toggleShuffle() {
+      shuffleMode = !shuffleMode;
+      document.getElementById('shuffle').textContent = `Shuffle: ${shuffleMode ? 'On' : 'Off'}`;
+    }
+
+    function loadVideo() {
+      player.loadVideoById(videoList[currentIndex].id);
       document.getElementById('playPause').textContent = 'Pause';
+      localStorage.setItem('lastIndex', currentIndex);
+      highlightCurrentVideo();
+    }
+
+    function renderPlaylist() {
+      const listEl = document.getElementById('playlist');
+      listEl.innerHTML = '';
+      videoList.forEach((vid, index) => {
+        const li = document.createElement('li');
+        li.textContent = vid.title;
+        if (index === currentIndex) li.classList.add('active');
+        li.addEventListener('click', () => {
+          currentIndex = index;
+          loadVideo();
+        });
+        listEl.appendChild(li);
+      });
+    }
+
+    function highlightCurrentVideo() {
+      const items = document.querySelectorAll('#playlist li');
+      items.forEach((li, i) => {
+        li.classList.toggle('active', i === currentIndex);
+      });
     }
   </script>
 </body>
